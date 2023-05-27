@@ -4,7 +4,7 @@ const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 
-const recordRouter = require('./index.js')
+const recordRouter = require('./server.js')
 
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(recordRouter)
