@@ -25,7 +25,7 @@ connection.connect(function(error){
  })
 
 
- router.get('/',(req, res) => {
+ router.get('/list',(req, res) => {
     const query = "SELECT * FROM dictionary"
     connection.query(query, (err, rows, field) => {
         if(err) {
@@ -36,6 +36,17 @@ connection.connect(function(error){
     })
 })
 
+router.get("/getWordbyId", (req, res) => {
+    const word_id = req.query.word_id
+    const query = "SELECT * FROM dictionary WHERE word_id = ?"
+    connection.query(query,[word_id], (err, rows, field) => {
+        if(err) {
+            res.status(500).send({message: err.sqlMessage})
+        } else {
+            res.json(rows)
+        }
+    })
+})
 
 router.get("/getWord", (req, res) => {
   const word = req.query.word
@@ -66,7 +77,7 @@ router.get("/searchWord", (req, res) => {
   const description = req.query.description
 
   const query = "SELECT * FROM dictionary WHERE word = ? OR description = ?"
-  connection.query(query,[word , description], (err, rows, field) => {
+  connection.query(query,[word, description], (err, rows, field) => {
       if(err) {
           res.status(500).send({message: err.sqlMessage})
       } else {
@@ -112,9 +123,10 @@ router.post("/insertWithImage", multer.single('attachment'), imgUpload.uploadToG
 
 router.put('/updateWord',(req, res) => {
     const word= req.body.word
+    const description= req.body.description
 
-    const query = "UPDATE dictionary SET word= ? WHERE word= ?"
-    connection.query(query,[word], (err, rows, field) => {
+    const query = "UPDATE dictionary SET word= ?, description= ? WHERE word_id= ?"
+    connection.query(query,[word, description], (err, rows, field) => {
         if(err) {
             res.status(500).send({message: err.sqlMessage})
         } else {
@@ -122,6 +134,14 @@ router.put('/updateWord',(req, res) => {
         }
     })
 })
+router.post("/uploadImage", multer.single('image'), imgUpload.uploadToGcs, (req, res, next) => {
+    const data = req.body
+    if (req.file && req.file.cloudStoragePublicUrl) {
+        data.imageUrl = req.file.cloudStoragePublicUrl
+    }
+  
+    res.send(data)
+  })
 
 router.delete("/deleteWord", (req, res) => {
   const word = req.query.word
@@ -136,13 +156,6 @@ router.delete("/deleteWord", (req, res) => {
   })
 })
 
-router.post("/uploadImage", multer.single('image'), imgUpload.uploadToGcs, (req, res, next) => {
-  const data = req.body
-  if (req.file && req.file.cloudStoragePublicUrl) {
-      data.imageUrl = req.file.cloudStoragePublicUrl
-  }
 
-  res.send(data)
-})
 
 module.exports = router;
